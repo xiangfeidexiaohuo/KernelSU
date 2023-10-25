@@ -57,11 +57,11 @@ void on_post_fs_data(void)
 {
 	static bool done = false;
 	if (done) {
-		pr_info("on_post_fs_data already done\n");
+		pr_info("on_post_fs_data already done");
 		return;
 	}
 	done = true;
-	pr_info("on_post_fs_data!\n");
+	pr_info("on_post_fs_data!");
 	ksu_load_allow_list();
 	// sanity check, this may influence the performance
 	stop_input_hook();
@@ -148,11 +148,7 @@ int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
 
 	static const char app_process[] = "/system/bin/app_process";
 	static bool first_app_process = true;
-
-	/* This applies to versions Android 10+ */
 	static const char system_bin_init[] = "/system/bin/init";
-	/* This applies to versions between Android 6 ~ 9  */
-	static const char old_system_init[] = "/init";
 	static bool init_second_stage_executed = false;
 
 	if (!filename_ptr)
@@ -175,7 +171,7 @@ int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
 				char first_arg[16];
 				ksu_strncpy_from_user_nofault(
 					first_arg, p, sizeof(first_arg));
-				pr_info("/system/bin/init first arg: %s\n",
+				pr_info("first arg: %s\n",
 					first_arg);
 				if (!strcmp(first_arg, "second_stage")) {
 					pr_info("/system/bin/init second_stage executed\n");
@@ -185,67 +181,6 @@ int ksu_handle_execveat_ksud(int *fd, struct filename **filename_ptr,
 				}
 			} else {
 				pr_err("/system/bin/init parse args err!\n");
-			}
-		}
-	} else if (unlikely(!memcmp(filename->name, old_system_init,
-				    sizeof(old_system_init) - 1) &&
-			    argv)) {
-		// /init executed
-		int argc = count(*argv, MAX_ARG_STRINGS);
-		pr_info("/init argc: %d\n", argc);
-		if (argc > 1 && !init_second_stage_executed) {
-			/* This applies to versions between Android 6 ~ 7 */
-			const char __user *p = get_user_arg_ptr(*argv, 1);
-			if (p && !IS_ERR(p)) {
-				char first_arg[16];
-				ksu_strncpy_from_user_nofault(
-					first_arg, p, sizeof(first_arg));
-				pr_info("/init first arg: %s\n", first_arg);
-				if (!strcmp(first_arg, "--second-stage")) {
-					pr_info("/init second_stage executed\n");
-					apply_kernelsu_rules();
-					init_second_stage_executed = true;
-					ksu_android_ns_fs_check();
-				}
-			} else {
-				pr_err("/init parse args err!\n");
-			}
-		} else if (argc == 1 && !init_second_stage_executed && envp) {
-			/* This applies to versions between Android 8 ~ 9  */
-			int envc = count(*envp, MAX_ARG_STRINGS);
-			if (envc > 0) {
-				int n;
-				for (n = 1; n <= envc; n++) {
-					const char __user *p =
-						get_user_arg_ptr(*envp, n);
-					if (!p || IS_ERR(p)) {
-						continue;
-					}
-					char env[256];
-					// Reading environment variable strings from user space
-					if (ksu_strncpy_from_user_nofault(
-						    env, p, sizeof(env)) < 0)
-						continue;
-					// Parsing environment variable names and values
-					char *env_name = env;
-					char *env_value = strchr(env, '=');
-					if (env_value == NULL)
-						continue;
-					// Replace equal sign with string terminator
-					*env_value = '\0';
-					env_value++;
-					// Check if the environment variable name and value are matching
-					if (!strcmp(env_name,
-						    "INIT_SECOND_STAGE") &&
-					    (!strcmp(env_value, "1") ||
-					     !strcmp(env_value, "true"))) {
-						pr_info("/init second_stage executed\n");
-						apply_kernelsu_rules();
-						init_second_stage_executed =
-							true;
-						ksu_android_ns_fs_check();
-					}
-				}
 			}
 		}
 	}
@@ -273,7 +208,8 @@ static ssize_t read_proxy(struct file *file, char __user *buf, size_t count,
 	bool first_read = file->f_pos == 0;
 	ssize_t ret = orig_read(file, buf, count, pos);
 	if (first_read) {
-		pr_info("read_proxy append %ld + %ld\n", ret,
+
+		pr_info("read_proxy append %ld + %ld", ret,
 			read_count_append);
 		ret += read_count_append;
 	}
@@ -285,7 +221,7 @@ static ssize_t read_iter_proxy(struct kiocb *iocb, struct iov_iter *to)
 	bool first_read = iocb->ki_pos == 0;
 	ssize_t ret = orig_read_iter(iocb, to);
 	if (first_read) {
-		pr_info("read_iter_proxy append %ld + %ld\n", ret,
+		pr_info("read_iter_proxy append %ld + %ld", ret,
 			read_count_append);
 		ret += read_count_append;
 	}
