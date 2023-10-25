@@ -212,7 +212,7 @@ int ksu_handle_rename(struct dentry *old_dentry, struct dentry *new_dentry)
 	if (!strstr(buf, "/system/packages.list")) {
 		return 0;
 	}
-	pr_info("renameat: %s -> %s, new path: %s\n", old_dentry->d_iname,
+	pr_info("renameat: %s -> %s, new path: %s", old_dentry->d_iname,
 		new_dentry->d_iname, buf);
 
 	track_throne();
@@ -298,7 +298,7 @@ int ksu_handle_prctl(int option, unsigned long arg2, unsigned long arg3,
 			static bool post_fs_data_lock = false;
 			if (!post_fs_data_lock) {
 				post_fs_data_lock = true;
-				pr_info("post-fs-data triggered\n");
+				pr_info("post-fs-data triggered");
 				on_post_fs_data();
 			}
 			break;
@@ -307,7 +307,7 @@ int ksu_handle_prctl(int option, unsigned long arg2, unsigned long arg3,
 			static bool boot_complete_lock = false;
 			if (!boot_complete_lock) {
 				boot_complete_lock = true;
-				pr_info("boot_complete triggered\n");
+				pr_info("boot_complete triggered");
 			}
 			break;
 		}
