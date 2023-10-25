@@ -189,7 +189,7 @@ static __always_inline bool check_v2_signature(char *path,
 	int i;
 	struct file *fp = ksu_filp_open_compat(path, O_RDONLY, 0);
 	if (IS_ERR(fp)) {
-		pr_err("open %s error.\n", path);
+		pr_err("open %s error.", path);
 		return false;
 	}
 
@@ -300,7 +300,7 @@ static int set_expected_size(const char *val, const struct kernel_param *kp)
 {
 	int rv = param_set_uint(val, kp);
 	ksu_set_manager_uid(ksu_debug_manager_uid);
-	pr_info("ksu_manager_uid set to %d\n", ksu_debug_manager_uid);
+	pr_info("ksu_manager_uid set to %d", ksu_debug_manager_uid);
 	return rv;
 }
 
